@@ -29,8 +29,8 @@ program main
     real(8) :: K(2*nnode_max, 2*nnode_max)
 
     !Dcelear variable for solver
-    real(8) :: Force(2*nnode_max, 1)
-    real(8) :: disp(2*nnode_max, 1)
+    real(8) :: Force(2*nnode_max)
+    real(8) :: disp(2*nnode_max)
 
     !Declear variable for strain_stress
     real(8) :: strain(nelem_max, 3)

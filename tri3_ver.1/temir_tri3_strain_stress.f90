@@ -9,7 +9,7 @@ subroutine strain_stress(nelem, connect, D, B, disp, strain, stress)
     integer, intent(in) :: connect(nelem_max, 3)
     real(8), intent(in) :: D(3,3)
     real(8), intent(in) :: B(nelem_max,3,6)
-    real(8), intent(in) :: disp(2*nnode_max, 1)
+    real(8), intent(in) :: disp(2*nnode_max)
     real(8), intent(out) :: strain(nelem_max, 3)
     real(8), intent(out) :: stress(nelem_max, 3)
 
