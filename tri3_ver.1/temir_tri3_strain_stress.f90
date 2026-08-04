@@ -4,7 +4,7 @@ subroutine strain_stress(nelem, connect, D, B, disp, strain, stress)
 
     !!!!! Get displacement and D and B matrix, then calculate strain and stress.
 
-    !Declear variable get from main
+    ! Declear variable get from main
     integer, intent(in) :: nelem
     integer, intent(in) :: connect(nelem_max, 3)
     real(8), intent(in) :: D(3,3)
@@ -13,11 +13,11 @@ subroutine strain_stress(nelem, connect, D, B, disp, strain, stress)
     real(8), intent(out) :: strain(nelem_max, 3)
     real(8), intent(out) :: stress(nelem_max, 3)
 
-    !Declear local variable in strain_stress
+    ! Declear local variable in strain_stress
     integer :: e,i,j,k,l
     real(8) :: disp_local(6)
 
-    !!! Vamos a Calculate
+    !!! Vamos a Calcular
     do e = 1, nelem
 
         !Extract displacement of element No.e 
@@ -25,8 +25,8 @@ subroutine strain_stress(nelem, connect, D, B, disp, strain, stress)
             disp_local(2*i-1) = disp(2*connect(e, i)-1)
             disp_local(2*i) = disp(2*connect(e, i))
         end do
-
-        !Reset strain andastress
+        
+        !Reset strain and stress
         do j = 1, 3
             strain(e, j) = 0.0d0
             stress(e, j) = 0.0d0
