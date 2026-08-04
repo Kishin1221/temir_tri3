@@ -1,7 +1,7 @@
 subroutine strain_stress(nelem, connect, D, B, disp, strain, stress)
     use parameters
     implicit none
-    
+
     !!!!! Get displacement and D and B matrix, then calculate strain and stress.
 
     !Declear variable get from main
