@@ -21,11 +21,11 @@ subroutine make_B(connect, coord, nelem, B)
         !Reset to 0
         do m = 1, 3
             do n = 1, 6
-                B (e, m, n) = 0.0d0
+                B (e, m, n) = 0.0d0                                 ! Initialize
             end do
         end do
 
-        area = 0.0d0
+        area = 0.0d0                                                ! Initialize
 
         bi(e,1) = coord(connect(e, 2),2) - coord(connect(e, 3),2)
         bi(e,2) = coord(connect(e, 3),2) - coord(connect(e, 1),2)
@@ -35,7 +35,7 @@ subroutine make_B(connect, coord, nelem, B)
         ci(e,3) = coord(connect(e, 2),1) - coord(connect(e, 1),1)  
 
         do i = 1,3
-            area = area + (coord(connect(e, i),1) * bi(e, i))/2
+            area = area + (coord(connect(e, i),1) * bi(e, i))/2     ! Calcular area of element
         end do
         
         !Caluculate entry of B-matrix

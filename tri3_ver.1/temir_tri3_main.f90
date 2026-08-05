@@ -4,7 +4,8 @@ module parameters
     integer, parameter :: nelem_max = 2000
 
 contains
-    function expo2double(field) result(value)
+    !!! This is the functions to convert values from marc_style_exponent natation to real(8) notation. 
+    function expo2double(field) result(value)       
         character(len = 256), intent(in) :: field
         integer :: expo, pos
         real(8) :: base, value
@@ -13,7 +14,7 @@ contains
         read(field(:pos-1),*) base                  ! Extract base of value
         read(field(pos:),*) expo                    ! Extract exponent of value
 
-        value =base * 10.0d0**expo
+        value =base * 10.0d0**expo                  ! Convert to double
     end function expo2double
 end module parameters
 
