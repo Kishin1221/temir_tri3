@@ -1,4 +1,5 @@
 program test_make_D
+    use parameters
     implicit none
 
     real(8) :: E, nu

@@ -21,12 +21,7 @@ program main
     use parameters
     implicit none
 
-    !!!!!!! "temir" is a FEM program for elastic homogeneous material. 
-    
-    !!!!! This program only accept tri3 element type.
-    !!!!! Max size of model is defined below. 
-
-    !Declear variable for read_dat
+    ! Declear variable get from main
     integer :: nnode, nelem
     integer :: connect(nelem_max, 3)
     real(8) :: coord(nnode_max, 2)
@@ -38,32 +33,50 @@ program main
     !Declear variable for make_B
     real(8) :: B(nelem_max,3,6)
 
-    !Declear variable for assembly_K
-    real(8) :: K(2*nnode_max, 2*nnode_max)
-
-    !Dcelear variable for solver
-    real(8) :: Force(2*nnode_max)
-    real(8) :: disp(2*nnode_max)
-
-    !Declear variable for strain_stress
-    real(8) :: strain(nelem_max, 3)
-    real(8) :: stress(nelem_max, 3)
-
-    !!! Start Sbroutines    
+    ! Declear variable in test_read_dat
+    integer :: i, j
+    
     call read_dat(connect, coord, nnode, nelem, E, nu)
 
-    call bc(connect, coord)
-
     call make_D(D, E, nu)
-
+    
     call make_B(connect, coord, nelem, B)
 
-    call assembly_K(connect, coord, K, D, B)
+    print *, "connectivity"
+    do i = 1, nelem
+        do j = 1, 3
+            print *, connect(i, j)
+        end do
+        print *
+    end do
+    
+    print *, "coordinates"
+    do i = 1, nnode
+        do j = 1, 2
+            print *, coord(i, j)
+        end do
+        print *
+    end do
 
-    call solver(connect, coord, nnode, nelem, D, B, K, Force, disp)
+    print *, "E = "
+    print *, E
+    print *, "nu = "
+    print *, nu
 
-    call strain_stress(nelem, connect, D, B, disp, strain, stress)
+    print *, "D-matrix"
+    do i=1, 3
+        do j=1, 3
+            print *, D(i, j)
+        end do
+        print *
+    end do
 
-    call write(connect, coord, strain, stress)
+    print *, "B-matrix"
+    do i=1, nelem
+        do j=1, 3
+            print *, B(i,j,:)
+        end do
+        print *
+    end do
 
-end program
+end program main  
