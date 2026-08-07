@@ -2,6 +2,7 @@ module parameters
     implicit none
     integer, parameter :: nnode_max = 1000
     integer, parameter :: nelem_max = 2000
+    integer, parameter :: nbc_max = 10
 
 contains
     !!! This is the functions to convert values from marc_style_exponent natation to real(8) notation. 
@@ -25,10 +26,10 @@ program main
     !!!!!!! "temir" is a FEM program for elastic homogeneous material. 
     
     !!!!! This program only accept tri3 element type.
-    !!!!! Max size of model is defined below. 
+    !!!!! Max size of model is defined in module. 
 
-    !Declear variable for read_dat
-    integer :: nnode, nelem
+    !Declear variable for read_geometry
+    integer :: datfile, nnode, nelem
     integer :: connect(nelem_max, 3)
     real(8) :: coord(nnode_max, 2)
     real(8) :: E, nu
@@ -51,9 +52,9 @@ program main
     real(8) :: stress(nelem_max, 3)
 
     !!! Start Sbroutines    
-    call read_dat(connect, coord, nnode, nelem, E, nu)
+    call read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
 
-    call bc(connect, coord)
+    call read_BC(datfile, bc_disp, bc_force)
 
     call make_D(D, E, nu)
 
