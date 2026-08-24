@@ -15,18 +15,20 @@ subroutine read_BC(datfile)
     integer :: num_bc_set, bc_set_id, bc_node_set(nbc_max,1000)
     integer :: i, j, l
 
-    ! Variables used in "define"
+    ! Declear variables used in "define"
     character(len=256) :: bc_set_type
     character(len=20)  :: tokens(100)
     integer :: ini_node, fin_node, num_to_node, temp_node, token_count, set_node_count
-    integer :: ios_temp_node
     logical :: find_to
 
-    ! Variables used in fixed disp and point load
+    ! Declear variables used in fixed disp and point load
     integer :: fixed_disp_vector(nbc_max,3)
     integer :: num_stored_bc
     real(8) :: fixed_disp_magn(nbc_max,3), point_load_magn(nbc_max,2)
     real(8) :: magnitude
+
+    ! Declear variables to find error
+    integer :: ios_define, ios_temp_node, ios_token, ios_buscar
 
     !!! Go to the top of .dat input file
     rewind(datfile)
@@ -34,11 +36,16 @@ subroutine read_BC(datfile)
 
     !!! Skip to first "define"
     do                                             
-        read(datfile,"(A)") line
+        read(datfile,"(A)", iostat = ios_define) line
+        if (ios_define /= 0) then
+            print *, "!!!!! ERROR : Blocks of define Not Found !!!!!"
+            error stop
+        end if
+
         if (line(1:12) == "define") then                            ! Find a block of "define"
             exit
         end if
-    end do    
+    end do
 
     !!! Get "set" info of boundary conditions
     do 
@@ -66,7 +73,7 @@ subroutine read_BC(datfile)
         do 
             read(datfile,"(A)") line
             tokens = "@"
-            read(line,*) tokens                                     ! Sprit line to block and memorize as array of "tokens"
+            read(line,*,iostat = ios_token) tokens                  ! Sprit line to block and memorize as array of "tokens"
             token_count = count(tokens /= "@")                      ! Count th number of entry of "tokens"
 
             find_to = any(tokens(1:token_count) == "to")            ! Continuas nodes are expressed with "to".
@@ -119,7 +126,11 @@ subroutine read_BC(datfile)
 
     ! Loop B1 !
     Buscar_All_BC : do 
-        read(datfile,"(A)") line
+        read(datfile,"(A)",iostat = ios_buscar) line
+        if (ios_buscar /= 0) then
+            print *, "!!!!! ERROR : The Boundary Conditions not found !!!!!"
+            error stop
+        end if
         
         !!! Read fixed disp
         if (line(1:12) == "fixed disp") then                        ! Find a block of "fixed disp"
@@ -128,6 +139,18 @@ subroutine read_BC(datfile)
             ! Loop B2(fixed disp) !
             do
                 read(datfile,"(A)") line
+
+                !!! ここはデバックのための追加部分 !!!
+                print *, "DEBUG line(61:80) = [", line(61:80), "]"
+                do l = 1, num_bc_set
+                    print *, "DEBUG bc_set_name(", l, ") = [", bc_set_name(l), "]"  
+                end do
+                !!! ここまで !!!
+                ! 問題点 : define block での名称とBC block 1行目での名称が異なる．
+                ! 案1 : define blockでの名称の末尾_nodesを切り取ってBC block 1行目と比較する．
+                ! 案2 : magnを一時的に目盛に格納し，最終行まで読んだところで名称を比較する．
+
+                bc_set_id = -1                                      ! Give -1 to bc_set_id as a initial value.
                 do l = 1, num_bc_set                                ! "l" is just a counter to search the same name.
                     if (line(61:80) == bc_set_name(l)) then         ! Find the set of "define" which has the same name 
                         bc_set_id = l
@@ -135,10 +158,15 @@ subroutine read_BC(datfile)
                     end if
                 end do
 
+                if (bc_set_id == -1) then                            ! -1 means bc_set_name corresponding does not found.
+                    print *, "!!!!! ERROR : bc_set_name not matched (fixed disp) !!!!!"
+                    error stop
+                end if
+
                 read(datfile,"(A)") line
                 tokens = "@"
-                read(line,*) tokens                                 ! Sprit line to block and memorize as array of "tokens"
-                token_count = count(tokens /= "@")                  ! Count th number of entry of "tokens"
+                read(line,*, iostat = ios_token) tokens                                 ! Sprit line to block and memorize as array of "tokens"
+                token_count = count(tokens /= "@")                  ! Count the number of entry of "tokens"
 
                 do i = 1, token_count
                     magnitude = expo2double(tokens(i))
@@ -149,7 +177,7 @@ subroutine read_BC(datfile)
                    
                 read(datfile, "(A)") line
                 tokens = "@"
-                read(line,*) tokens
+                read(line,*, iostat = ios_token) tokens
 
                 do j = 1, token_count
                     read(tokens(j),*) fixed_disp_vector(bc_set_id, j)           ! Store vector of BC
@@ -173,6 +201,7 @@ subroutine read_BC(datfile)
             ! Loop B2(point load) !
             do
                 read(datfile,"(A)") line
+                bc_set_id = -1                                      ! Give -1 to bc_set_id as a initial value.
                 do l = 1, num_bc_set                                ! "l" is just a counter to search the same name.
                     if (line(61:80) == bc_set_name(l)) then         ! Find the set of "define" which has the same name
                         bc_set_id = l
@@ -180,9 +209,14 @@ subroutine read_BC(datfile)
                     end if
                 end do
 
+                if (bc_set_id == -1) then                            ! -1 means bc_set_name corresponding does not found.
+                    print *, "!!!!! ERROR : bc_set_name not matched (point load) !!!!!"
+                    error stop
+                end if
+
                 read(datfile,"(A)") line
                 tokens = "@"
-                read(line,*) tokens                                 ! Sprit line to block and memorize as array of "tokens"
+                read(line,*, iostat = ios_token) tokens                                 ! Sprit line to block and memorize as array of "tokens"
                 token_count = count(tokens /= "@")                  ! Count th number of entry of "tokens"        
 
                 do i = 1, token_count
@@ -203,3 +237,4 @@ subroutine read_BC(datfile)
             end do
         end if
     end do Buscar_All_BC                                            ! End of boundary conditions
+end subroutine read_BC

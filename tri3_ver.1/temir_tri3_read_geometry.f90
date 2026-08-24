@@ -17,9 +17,9 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
     integer :: ios_nelem, ios_nnode, elem_type, ios_elem_type
     integer :: i, j, l, m, n, pos, expo
 
-
-    
-
+    ! Declear variables to find error
+    integer :: ios_sizing, ios_connectivity, ios_coordinate, ios_isotropic
+ 
     !!! Specify .dat file to input
     call get_command_argument(1,datfilename)                        ! Get the name of input file
     print *, "Input file = ",trim(datfilename)
@@ -28,7 +28,12 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
     !!! Get geometry info of model
     ! Get model size
     do 
-        read(10,"(A)") line
+        read(datfile,"(A)",iostat = ios_sizing) line
+        if (ios_sizing /= 0) then
+            print *, "!!!!! ERROR : Blocks of sizing Not Found !!!!!"
+            error stop
+        end if
+
         if (line(1:10) == "sizing") then                            ! Buscar "sizing"
             read(line(41:50),*,iostat=ios_nelem) nelem              ! Store number of elements
             read(line(51:60),*,iostat=ios_nnode) nnode              ! Store number of nodes
@@ -41,6 +46,7 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
             else
                 print *, "!!!!! ERROR : Size data read !!!!!"
                 print *, "line = ",line
+                error stop
             end if
 
             exit
@@ -49,12 +55,17 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
   
     ! Store element connectivity
     do 
-        read(10,"(A)") line
+        read(datfile,"(A)", iostat = ios_connectivity) line
+        if (ios_connectivity /= 0) then
+            print *, "!!!!! ERROR : Blocks of connectivity Not Found !!!!!"
+            error stop
+        end if
+
         if(line(1:12) == "connectivity") then                       ! Buscar "connectivity"
-            read(10,*)
+            read(datfile,*)
 
             do m = 1, nelem
-                read(10,"(A)") line
+                read(datfile,"(A)") line
                 read(line(16:20),*,iostat=ios_elem_type) elem_type
                     if(elem_type == 201) then                       ! Confirm type of elemnt == 201
 
@@ -65,6 +76,7 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
                         read(line(46:50),*) connect(i, 3)           ! Store number of 3rd node
 
                     else
+                        read(line(6:10),*) i                        ! Store element number                        
                         print *, "!!!!! Unexpected type of element : element number = ", "element type = ", i, elem_type
                     end if
             end do
@@ -74,11 +86,16 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
 
     ! Store node coordinate
     do 
-        read(10,"(A)") line
+        read(datfile,"(A)", iostat = ios_coordinate) line
+        if (ios_coordinate /= 0) then
+            print *, "!!!!! ERROR : Blocks of coordinate Not Found !!!!!"
+            error stop
+        end if
+
         if(line(1:11) == "coordinates") then                        ! Buscar "coordinates"
-            read(10,*)
+            read(datfile,*)
             do n = 1, nnode 
-                read(10,"(A)") line
+                read(datfile,"(A)") line
                 read(line(6:10),*) j                                ! Store node number
                                                                     ! The number of line "n" has possible to differ from node number "j".
                 do l = 1, 2
@@ -93,13 +110,18 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
     !!! Get material properties
     !!暫定的なやつ．仕様書がよくわからない．
     do 
-        read(10,"(A)") line
+        read(datfile,"(A)", iostat = ios_isotropic) line
+        if (ios_isotropic /= 0) then
+            print *, "!!!!! ERROR : Block of isotropic Not Found !!!!!"
+            error stop
+        end if
+
         if(line(1:9) == "isotropic") then
-            read(10,*)
-            read(10,*)
-            read(10,*)
+            read(datfile,*)
+            read(datfile,*)
+            read(datfile,*)
             
-            read(10,"(A)") line
+            read(datfile,"(A)") line
             read(line(1:20),*) field
             E = expo2double(field)                                  ! Convert notation by expo2double
             

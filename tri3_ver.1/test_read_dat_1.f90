@@ -1,10 +1,13 @@
+!!! Module set 
 module parameters
     implicit none
     integer, parameter :: nnode_max = 1000
     integer, parameter :: nelem_max = 2000
+    integer, parameter :: nbc_max = 10
 
 contains
-    function expo2double(field) result(value)
+    !!! This is the functions to convert values from marc_style_exponent natation to real(8) notation. 
+    function expo2double(field) result(value)       
         character(len = 256), intent(in) :: field
         integer :: expo, pos
         real(8) :: base, value
@@ -13,7 +16,7 @@ contains
         read(field(:pos-1),*) base                  ! Extract base of value
         read(field(pos:),*) expo                    ! Extract exponent of value
 
-        value =base * 10.0d0**expo
+        value =base * 10.0d0**expo                  ! Convert to double
     end function expo2double
 end module parameters
 
@@ -22,7 +25,7 @@ program main
     implicit none
 
     ! Declear variable get from main
-    integer :: nnode, nelem
+    integer :: datfile, nnode, nelem
     integer :: connect(nelem_max, 3)
     real(8) :: coord(nnode_max, 2)
     real(8) :: E, nu
@@ -36,7 +39,9 @@ program main
     ! Declear variable in test_read_dat
     integer :: i, j
     
-    call read_dat(connect, coord, nnode, nelem, E, nu)
+    call read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
+
+    call read_BC(datfile)
 
     call make_D(D, E, nu)
     

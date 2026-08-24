@@ -1,3 +1,15 @@
+!!!!!!! "temir" is a FEM program for elastic homogeneous material. !!!!!!!
+
+!!!!! Program Specifications !!!!! 
+! This version "temir_tri3" only accept marc element type 201. !!!!!
+! Max size of model is specified in module. !!!!!
+! Running command should be "~/path/temir_tri3_main.exe modeldatfil.dat". !
+
+!!! To Avoid Error (The situations below are not expected in this program.) !!! 
+! All boundary conditions defined in mentat must be used in job. !
+! 
+
+!!! Module set 
 module parameters
     implicit none
     integer, parameter :: nnode_max = 1000
@@ -19,14 +31,10 @@ contains
     end function expo2double
 end module parameters
 
+!!! Main of the program 
 program main
     use parameters
     implicit none
-
-    !!!!!!! "temir" is a FEM program for elastic homogeneous material. 
-    
-    !!!!! This program only accept tri3 element type.
-    !!!!! Max size of model is defined in module. 
 
     !Declear variable for read_geometry
     integer :: datfile, nnode, nelem
@@ -54,7 +62,7 @@ program main
     !!! Start Sbroutines    
     call read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
 
-    call read_BC(datfile, bc_disp, bc_force)
+    call read_BC(datfile)
 
     call make_D(D, E, nu)
 
