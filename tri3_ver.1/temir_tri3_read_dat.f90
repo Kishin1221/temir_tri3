@@ -13,14 +13,10 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
 
     ! Declear local variable in read_geometry
     character(len=256) :: datfilename
-    character(len=256) :: line, field, bc_set_type 
-    character(len=20)  :: bc_set_name(10)
+    character(len=256) :: line, field
     integer :: ios_nelem, ios_nnode, elem_type, ios_elem_type
-    integer :: i, j, l, m, n, pos, expo, bc_set_id
-    integer :: fixed_disp_vector(10,2), point_load_vector(10,2)
-    real(8) :: fixed_disp_magn(10,2), point_load_magn(10,2)
-    real(8) :: magnitude
-    integer :: bc_node_set(10,3)
+    integer :: i, j, l, m, n, pos, expo
+
 
     
 
@@ -112,101 +108,5 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
             exit
         end if
     end do
-             
-
-    rewind(10)                                                      ! Start reading the file from the top
-    bc_set_id = 1                                                   ! Initialize                                                 
-
-    do                                             
-        read(10,"(A)") line
-        if(line(1:12) == "define") then
-            exit
-        end if
-    end do
-
-    do 
-        read(line(21:40),*) bc_set_type                         ! Check the type of set of boundary condition
-        
-        if(bc_set_id > 10) then
-            print*, "!!!!! ERROR : Boundary conditions exist more than 10 !!!!!"
-            error stop
-        else
-            ! No problem
-!!!!        end if
-
-        ! Confirm the type of set is "node". This program accept displacement or POINT LOAD as a boundary conditions.
-        if(bc_set_type == "node") then
-            print *, "type of boundary conditions = node, OK"
-        else
-            print *, "!!!!! ERROR : THe type of boundary conditions are wrong !!!!! "
-        end if
-            
-        read(line(61:80),*) bc_set_name(bc_set_id)               ! Store the name of set of boundary condition
-            
-        read(10,"(A)") line
-        do i = 1, 1000 ! ループの回数 !
-            read(line(20*i-9:20*i),*) bc_node_set(bc_set_id, i)  ! Store a list of node to apply boundary condition
-        end do  ! このループ内は可変長に対応しないといけない
-
-        bc_set_id = bc_set_id + 1
-
-        read(10,"(A)") line
-        if(line(1:12) == "define") then
-            ! continuar
-        else 
-            exit
-        end if
-    end do
-    
-
-
-        
-   
-
-        read(10,"(A)") line ! これ要らなくね？
-        ! Read fixed disp
-        if(line(1:12) == "fixed disp") then
-            read(10,*)
-
-            do l = 1, 10
-
-                do bc_set_id = 1, 10
-                    read(10,"(A)") line
-                    if(line(61:80) == bc_set_name(bc_set_id)) then            
-                        read(10,"(A)") line
-
-                        do i = 1, 3
-                            read(line(20*i-19:20*i),*) field        ! Store a list of node to apply boundary condition
-                            magnitude = expo2double(field)          ! Convert notation by expo2double
-                            fixed_disp_magn(bc_set_id, i) = magnitude
-                        end do  ! このループ内も可変長に対応しないといけない
-
-                        read(10,*)
-                        read(10,"(A)") line
-                        do j = 1, 3
-                            read(line(10*j-9:10*j),*) fixed_disp_vector(bc_set_id, j) ! Store a list of vecotr to give displacement
-                        end do  ! このループ内も可変長に対応しないといけない
-                    end if
-                    read(10,*)
-                    read(10,*)
-                end do
-            end do
-
-        ! Read Dist load
-        else if(line(1:12) == "point loads") then
-            read(10,*)
-            
-            do l = 1, 10
-                read(10,"(A)") line
-                if(line(61:80) == bc_set_name(l)) then            
-                    read(10,"(A)") line
-                    do j = 1, 3
-                        read(line(20*j-19:20*j),*) field            ! Store a list of node to apply boundary condition
-                        fixed_disp_magnitude = expo2double(field)   ! Convert notation by expo2double
-                    end do  ! このループ内も可変長に対応しないといけない
-                end if
-            end do
-
-            
 
 end subroutine read_geometry

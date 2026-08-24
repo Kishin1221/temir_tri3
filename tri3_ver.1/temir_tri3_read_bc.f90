@@ -35,7 +35,7 @@ subroutine read_BC(datfile)
     !!! Skip to first "define"
     do                                             
         read(datfile,"(A)") line
-        if (line(1:12) == "define") then                            ! Find ablock of "define"
+        if (line(1:12) == "define") then                            ! Find a block of "define"
             exit
         end if
     end do    
