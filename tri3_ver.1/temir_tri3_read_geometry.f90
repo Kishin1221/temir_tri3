@@ -77,7 +77,8 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
 
                     else
                         read(line(6:10),*) i                        ! Store element number                        
-                        print *, "!!!!! Unexpected type of element : element number = ", "element type = ", i, elem_type
+                        print *, "!!!!! Unexpected type of element : element number = ", i, ", element type = ", elem_type
+                        error stop
                     end if
             end do
             exit

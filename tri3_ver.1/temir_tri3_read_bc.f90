@@ -1,19 +1,21 @@
-subroutine read_BC(datfile)
+subroutine read_BC(datfile, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_vector, fixed_disp_magn, point_load_magn)
     use parameters
     implicit none
 
-    !!!!! Read the same file as subroutine read_dat, and make vector of External Force and Given Displacement.
-
-    ! Declear variable get from main
-
-    ! Declear variable pssed by read_geometry
+    !!!!! Read the same file as subroutine read_geometry, and make vector of External Force and Given Displacement.
+    ! Declear variable passed by read_geometry
     integer, intent(in) :: datfile
+
+    ! Declear variables return to main
+    integer, intent(out) :: num_bc_set, bc_node_set(nbc_max,1000)
+    integer, intent(out) :: fixed_disp_vector(nbc_max,3), num_node_in_set(nbc_max)
+    real(8), intent(out) :: fixed_disp_magn(nbc_max,3), point_load_magn(nbc_max,2)
 
     ! Declear common variable in read_bc
     character(len=256) :: line, field
     character(len=20)  :: bc_set_name(nbc_max)
-    integer :: num_bc_set, bc_set_id, bc_node_set(nbc_max,1000)
-    integer :: i, j, l
+    integer :: bc_set_id
+    integer :: i, j, l, m
 
     ! Declear variables used in "define"
     character(len=256) :: bc_set_type
@@ -22,10 +24,13 @@ subroutine read_BC(datfile)
     logical :: find_to
 
     ! Declear variables used in fixed disp and point load
-    integer :: fixed_disp_vector(nbc_max,3)
     integer :: num_stored_bc
-    real(8) :: fixed_disp_magn(nbc_max,3), point_load_magn(nbc_max,2)
     real(8) :: magnitude
+
+    !Declear temporary variable used in fixed disp and point load
+    character(len=20) :: temp_bc_name(nbc_max)
+    integer :: temp_fixed_disp_vector(nbc_max,3)
+    real(8) :: temp_fixed_disp_magn(nbc_max,3), temp_point_load_magn(nbc_max,2)
 
     ! Declear variables to find error
     integer :: ios_define, ios_temp_node, ios_token, ios_buscar
@@ -47,7 +52,7 @@ subroutine read_BC(datfile)
         end if
     end do
 
-    !!! Get "set" info of boundary conditions
+    !!! Get "set" info of boundary conditions in define blocks
     do 
         read(line(21:40),*) bc_set_type                             ! Check the type of set of boundary condition
         
@@ -80,7 +85,7 @@ subroutine read_BC(datfile)
             if (find_to) then
                 read(tokens(1),*) ini_node                          ! Store initial node number of "to" list
                 read(tokens(3),*) fin_node                          ! Store final node number of "to" list
-                num_to_node = fin_node - ini_node + 1
+                num_node_in_set(bc_set_id) = fin_node - ini_node + 1
 
                 do l = 1, num_to_node                                           
                     bc_node_set(bc_set_id, l) = ini_node + l - 1    ! Store node number to apply BC
@@ -102,6 +107,7 @@ subroutine read_BC(datfile)
                         end if
                     end if
                 end do
+                num_node_in_set(bc_set_id) = set_node_count -1      ! Store the number of nodes included in BC set
             
                 if(tokens(token_count) == "c") then                 ! If last token is "c", go to next line and repeat Loop A2.
                     ! Read next line
@@ -125,7 +131,9 @@ subroutine read_BC(datfile)
     num_stored_bc = 0                   ! This is used to judge whether all BC have been read.
 
     ! Loop B1 !
-    Buscar_All_BC : do 
+    Buscar_All_BC : do
+    ! Try to find all BC by searching the characters of "fixed disp" or "point load".
+    ! Each block of BC (both of the blocks of "fixed disp" and "point load") consist of 6 lines in total. 
         read(datfile,"(A)",iostat = ios_buscar) line
         if (ios_buscar /= 0) then
             print *, "!!!!! ERROR : The Boundary Conditions not found !!!!!"
@@ -134,59 +142,56 @@ subroutine read_BC(datfile)
         
         !!! Read fixed disp
         if (line(1:12) == "fixed disp") then                        ! Find a block of "fixed disp"
-            read(datfile,*)
-            
+            read(datfile,*)                                         ! Skip the next line of the characters of "fixed disp". 
+            !Now the next line is the 1st line of the 1st "fixed disp" block.
+
             ! Loop B2(fixed disp) !
             do
-                read(datfile,"(A)") line
+                num_stored_bc = num_stored_bc + 1                   ! Count up the number of BC which are already read.
+                read(datfile,*)                                     ! The 1nd line of the block has no information to use. 
+                read(datfile,"(A)") line                            ! Read the 3rd line to get disp magnitude
+                tokens = "@"                                        ! Initialize
+                read(line,*, iostat = ios_token) tokens             ! Sprit line to block and memorize as array of "tokens"
+                token_count = count(tokens /= "@")                  ! Count the number of valid entry of "tokens"
 
-                !!! ここはデバックのための追加部分 !!!
-                print *, "DEBUG line(61:80) = [", line(61:80), "]"
-                do l = 1, num_bc_set
-                    print *, "DEBUG bc_set_name(", l, ") = [", bc_set_name(l), "]"  
-                end do
-                !!! ここまで !!!
-                ! 問題点 : define block での名称とBC block 1行目での名称が異なる．
-                ! 案1 : define blockでの名称の末尾_nodesを切り取ってBC block 1行目と比較する．
-                ! 案2 : magnを一時的に目盛に格納し，最終行まで読んだところで名称を比較する．
-
-                bc_set_id = -1                                      ! Give -1 to bc_set_id as a initial value.
-                do l = 1, num_bc_set                                ! "l" is just a counter to search the same name.
-                    if (line(61:80) == bc_set_name(l)) then         ! Find the set of "define" which has the same name 
-                        bc_set_id = l
-                        exit
-                    end if
-                end do
-
-                if (bc_set_id == -1) then                            ! -1 means bc_set_name corresponding does not found.
-                    print *, "!!!!! ERROR : bc_set_name not matched (fixed disp) !!!!!"
-                    error stop
-                end if
-
-                read(datfile,"(A)") line
-                tokens = "@"
-                read(line,*, iostat = ios_token) tokens                                 ! Sprit line to block and memorize as array of "tokens"
-                token_count = count(tokens /= "@")                  ! Count the number of entry of "tokens"
-
+                temp_fixed_disp_magn = 0                            ! Initialize
                 do i = 1, token_count
                     magnitude = expo2double(tokens(i))
-                    fixed_disp_magn(bc_set_id, i) = magnitude       ! Store magnitude of displacment
+                    temp_fixed_disp_magn(num_stored_bc, i) = magnitude                  ! Store magnitude of displacment
                 end do
 
                 read(datfile,*)
                    
-                read(datfile, "(A)") line
-                tokens = "@"
+                read(datfile, "(A)") line                           ! Read line of disp vector
+                tokens = "@"                                        ! Initialize
                 read(line,*, iostat = ios_token) tokens
 
+                temp_fixed_disp_vector = 0                          ! Initialize
                 do j = 1, token_count
-                    read(tokens(j),*) fixed_disp_vector(bc_set_id, j)           ! Store vector of BC
+                    read(tokens(j),*) temp_fixed_disp_vector(num_stored_bc, j)                  ! Store vector of BC
                 end do
 
                 read(datfile,*)
-                read(datfile,*)
+                
+                read(datfile,"(A)") line
+                temp_bc_name(num_stored_bc) = line(1:20)            ! Store the name of BC (This is used to map define block and BC block later)
 
-                num_stored_bc = num_stored_bc + 1                   ! Count up the number of BC which are already read.
+                do l = 1, num_bc_set                                                            ! "l" is just a counter to search the same name.
+                    if (temp_bc_name(num_stored_bc) == bc_set_name(l)) then                     ! Find the set of "define" which has the same name.
+                        do i = 1, 3
+                            fixed_disp_magn(l, i) = temp_fixed_disp_magn(num_stored_bc, i)      ! Assign
+                            fixed_disp_vector(l, i) = temp_fixed_disp_vector(num_stored_bc, i)  ! Plug in 
+                        end do
+                        exit
+                    end if
+                end do
+                
+                read(datfile,"(A)") line
+                backspace(datfile)                                  ! Read the next line
+                if (line(1:12) == "point load") then                ! Judge whether fixed disp end or still exist below
+                    exit
+                end if
+
                 if (num_stored_bc == num_bc_set) then               ! Judgement of end of BC to read
                     exit Buscar_All_BC
                 else
@@ -200,35 +205,34 @@ subroutine read_BC(datfile)
             
             ! Loop B2(point load) !
             do
+                num_stored_bc = num_stored_bc + 1
+                read(datfile,*)
                 read(datfile,"(A)") line
-                bc_set_id = -1                                      ! Give -1 to bc_set_id as a initial value.
-                do l = 1, num_bc_set                                ! "l" is just a counter to search the same name.
-                    if (line(61:80) == bc_set_name(l)) then         ! Find the set of "define" which has the same name
-                        bc_set_id = l
+                tokens = "@"                                        ! Initialize
+                read(line,*, iostat = ios_token) tokens             ! Sprit line to block and memorize as array of "tokens"
+                token_count = count(tokens /= "@")                  ! Count th number of entry of "tokens"        
+
+                temp_point_load_magn = 0                            ! Initialize
+                do i = 1, token_count
+                    magnitude = expo2double(tokens(i))
+                    temp_point_load_magn(num_stored_bc, i) = magnitude                          ! Store magnitude of point load 
+                end do
+
+                read(datfile,*)
+                read(datfile,*)
+
+                read(datfile,"(A)") line
+                temp_bc_name(num_stored_bc) = line(1:20)            ! Get the name of this BC
+                do l = 1, num_bc_set
+                    if (temp_bc_name(num_stored_bc) == bc_set_name(l)) then                     ! Find the set of "define" which has the same name. 
+                        do i = 1, 2
+                            point_load_magn(l, i) = temp_point_load_magn(num_stored_bc, i)      ! Assign
+                        end do
                         exit
                     end if
                 end do
 
-                if (bc_set_id == -1) then                            ! -1 means bc_set_name corresponding does not found.
-                    print *, "!!!!! ERROR : bc_set_name not matched (point load) !!!!!"
-                    error stop
-                end if
-
-                read(datfile,"(A)") line
-                tokens = "@"
-                read(line,*, iostat = ios_token) tokens                                 ! Sprit line to block and memorize as array of "tokens"
-                token_count = count(tokens /= "@")                  ! Count th number of entry of "tokens"        
-
-                do i = 1, token_count
-                    magnitude = expo2double(tokens(i))
-                    point_load_magn(bc_set_id, i) = magnitude       ! Store magnitude of point load 
-                end do
-
-                read(datfile,*)
-                read(datfile,*)
-                read(datfile,*)
-                
-                num_stored_bc = num_stored_bc + 1                   ! Count up the number of BC which are already read.
+                ! Count up the number of BC which are already read.
                 if (num_stored_bc == num_bc_set) then               ! Judgement of end of BC to read
                     exit Buscar_All_BC
                 else
