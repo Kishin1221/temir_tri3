@@ -168,7 +168,7 @@ subroutine read_BC(datfile, num_bc_set, bc_node_set, num_node_in_set, fixed_disp
 
                 temp_fixed_disp_vector = 0                          ! Initialize
                 do j = 1, token_count
-                    read(tokens(j),*) temp_fixed_disp_vector(num_stored_bc, j)                  ! Store vector of BC
+                    read(tokens(j),*) temp_fixed_disp_vector(num_stored_bc, j)          ! Store vector of BC
                 end do
 
                 read(datfile,*)

@@ -58,7 +58,7 @@ program main
     real(8) :: Ke(nelem,6,6)
 
     !Declear variabls for assembly_K
-    real(8) :: K(2*nnode_max, 2*nnode_max)
+    real(8) :: stiffness(2*nnode_max, 2*nnode_max)
 
     !Dcelear variables for solver
     real(8) :: Force(2*nnode_max)
@@ -79,7 +79,7 @@ program main
 
     call make_Ke(nelem, D, B, area, t, Ke)
 
-    call assemble_K(connect, coord, K, D, B)
+    call assemble_stiffness(nnode, nelem, connect, Ke, stiffness)
 
     call solver(connect, coord, nnode, nelem, D, B, K, Force, disp)
 

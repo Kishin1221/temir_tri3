@@ -21,7 +21,7 @@ subroutine make_Ke(nelem, D, B, area, t, Ke)
         do i = 1, 3
             do j = 1, 6
                 do k = 1, 3
-                    DB(ielem, i, j) = DB(ielem, i, j) + D(i, k) * B(ielem, k, j)        ! Calculate B*D of (B-transpose)DB first
+                    DB(ielem, i, j) = DB(ielem, i, j) + D(i, k) * B(ielem, k, j)            ! Calculate B*D of (B-transpose)DB first
                 end do
             end do
         end do
@@ -31,7 +31,7 @@ subroutine make_Ke(nelem, D, B, area, t, Ke)
                 do k = 1, 3
                     Ke(ielem, i, j) = Ke(ielem, i, j) + (B(ielem, k, i) * DB(ielem, k, j))  ! Calculate (B-transpose)DB
                 end do
-                Ke(ielem, i, j) = Ke(ielem, i, j) * t * area(ielem)                     ! Maltiple thickness and area
+                Ke(ielem, i, j) = Ke(ielem, i, j) * t * area(ielem)                         ! Maltiple thickness and area
             end do
         end do
     end do
