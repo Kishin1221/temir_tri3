@@ -1,15 +1,15 @@
-subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
+subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu, t)
     use parameters
     implicit none
 
     !!!!! Get .dat file and extract model info and boundary conditions.
 
-    ! Declear variable get from main
+    ! Declear variable which will be sent to main
     integer, intent(out) :: datfile
-    integer :: nnode, nelem
-    integer :: connect(nelem_max, 3)
-    real(8) :: coord(nnode_max, 2)
-    real(8) :: E, nu
+    integer, intent(out) :: nnode, nelem
+    integer, intent(out) :: connect(nelem_max, 3)
+    real(8), intent(out) :: coord(nnode_max, 2)
+    real(8), intent(out) :: E, nu, t
 
     ! Declear local variable in read_geometry
     character(len=256) :: datfilename
@@ -18,7 +18,7 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
     integer :: i, j, l, m, n, pos, expo
 
     ! Declear variables to find error
-    integer :: ios_sizing, ios_connectivity, ios_coordinate, ios_isotropic
+    integer :: ios_sizing, ios_connectivity, ios_coordinate, ios_isotropic, ios_geom
  
     !!! Specify .dat file to input
     call get_command_argument(1,datfilename)                        ! Get the name of input file
@@ -30,7 +30,7 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
     do 
         read(datfile,"(A)",iostat = ios_sizing) line
         if (ios_sizing /= 0) then
-            print *, "!!!!! ERROR : Blocks of sizing Not Found !!!!!"
+            print *, "!!!!! ERROR : Sizing Block Not Found !!!!!"
             error stop
         end if
 
@@ -57,7 +57,7 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
     do 
         read(datfile,"(A)", iostat = ios_connectivity) line
         if (ios_connectivity /= 0) then
-            print *, "!!!!! ERROR : Blocks of connectivity Not Found !!!!!"
+            print *, "!!!!! ERROR : Connectivity Block Not Found !!!!!"
             error stop
         end if
 
@@ -89,7 +89,7 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
     do 
         read(datfile,"(A)", iostat = ios_coordinate) line
         if (ios_coordinate /= 0) then
-            print *, "!!!!! ERROR : Blocks of coordinate Not Found !!!!!"
+            print *, "!!!!! ERROR : Coordinate Block Not Found !!!!!"
             error stop
         end if
 
@@ -113,7 +113,7 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
     do 
         read(datfile,"(A)", iostat = ios_isotropic) line
         if (ios_isotropic /= 0) then
-            print *, "!!!!! ERROR : Block of isotropic Not Found !!!!!"
+            print *, "!!!!! ERROR : Isotropic Block Not Found !!!!!"
             error stop
         end if
 
@@ -128,6 +128,26 @@ subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
             
             read(line(21:40),*) field
             nu = expo2double(field)                                 ! Convert notation by expo2double
+            exit
+        end if
+    end do
+
+    !!! Get geometry info
+    do
+        read(datfile,"(A)", iostat = ios_geom) line
+        if(ios_geom /= 0) then
+            print *, "!!!!! ERROR : Geometry Block Not Found !!!!!"
+            error stop
+        end if
+
+        if (line(1:16) == "geometry") then
+            read(datfile,*)
+            read(datfile,*)
+            read(datfile,*)
+
+            read(datfile,"(A)") line
+            read(line(1:20),*) field
+            t = expo2double(field)
             exit
         end if
     end do
