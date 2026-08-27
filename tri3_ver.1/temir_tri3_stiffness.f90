@@ -1,4 +1,5 @@
 subroutine make_elem_stiffness(nelem, D, B, area, t, elem_stiffness)
+
     use parameters
     implicit none
 
@@ -7,6 +8,8 @@ subroutine make_elem_stiffness(nelem, D, B, area, t, elem_stiffness)
     ! Declear variables get from main
     integer, intent(in) :: nelem
     real(8), intent(in) :: D(3,3), B(nelem_max,3,6), area(nelem_max), t
+    
+    ! Declear variables give to main
     real(8), intent(out) :: elem_stiffness(nelem_max,6,6)
 
     ! Declear local variables in make_elem_stiffness
@@ -38,7 +41,9 @@ subroutine make_elem_stiffness(nelem, D, B, area, t, elem_stiffness)
 
 end subroutine make_elem_stiffness
 
+
 subroutine assemble_stiffness(nnode, nelem, connect, elem_stiffness, stiffness)
+
     use parameters
     implicit none
 
