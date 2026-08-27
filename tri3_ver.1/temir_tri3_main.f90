@@ -54,11 +54,11 @@ program main
     !Declear variables for make_B
     real(8) :: B(nelem_max,3,6), area(nelem_max)    ! B : B-matrix
 
-    ! Declear variables for make_Ke
-    real(8) :: Ke(nelem,6,6)
+    ! Declear variables for make_elem_stiffness
+    real(8) :: elem_stiffness(nelem,6,6)
 
     !Declear variabls for assembly_K
-    real(8) :: stiffness(2*nnode_max, 2*nnode_max)
+    real(8) :: elem_stiffness(nelem_max,6,6), stiffness(2*nnode_max, 2*nnode_max)
 
     !Dcelear variables for solver
     real(8) :: Force(2*nnode_max)
@@ -77,9 +77,9 @@ program main
 
     call make_B(connect, coord, nelem, area, B)
 
-    call make_Ke(nelem, D, B, area, t, Ke)
+    call make_elem_stiffness(nelem, D, B, area, t, elem_stiffness)
 
-    call assemble_stiffness(nnode, nelem, connect, Ke, stiffness)
+    call assemble_stiffness(nnode, nelem, connect, elem_stiffness, stiffness)
 
     call solver(connect, coord, nnode, nelem, D, B, K, Force, disp)
 

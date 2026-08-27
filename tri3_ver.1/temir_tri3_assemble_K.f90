@@ -6,7 +6,7 @@ subroutine assemble_stiffness(nnode, nelem, connect, Ke, stiffness)
     
     ! Declear variables
     integer, intent(in) :: nnode, nelem, connect(nelem_max, 3)
-    real(8), intent(in) :: Ke(nelem_max,6,6)
+    real(8), intent(in) :: elem_stiffness(nelem_max,6,6)
     real(8), intent(out) :: stiffness(2*nnode_max, 2*nnode_max)
 
     ! Declear local variables
@@ -31,11 +31,9 @@ subroutine assemble_stiffness(nnode, nelem, connect, Ke, stiffness)
                     idof_f = 2 * connect(ielem, j/2)
                 end if
 
-                stiffness(idof_u, idof_f) = stiffness(idof_u, idof_f) + Ke(ielem, i, j)
+                stiffness(idof_u, idof_f) = stiffness(idof_u, idof_f) + elem_stiffness(ielem, i, j)
             end do
         end do
     end do
-
-
 
 end subroutine assemble_stiffness
