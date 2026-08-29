@@ -46,8 +46,11 @@ program main
     ! Declear variables for make_elem_stiffness
     real(8) :: elem_stiffness(nelem_max,6,6)
 
-    ! Declear variabls for assembly_K
+    ! Declear variabls for stiffness
     real(8) :: stiffness(2*nnode_max, 2*nnode_max)
+
+    ! Delear variables for apply_BC
+    real(8) :: reduced_stiffness(2*nnode_max,2*nnode_max), force(2*nnode_max), reduced_force(2*nnode_max)
 
     ! Declear variables for this test_read_dat_1.f90
     integer :: i, j, k
@@ -63,6 +66,9 @@ program main
     call make_elem_stiffness(nelem, D, B, area, t, elem_stiffness)
 
     call assemble_stiffness(nnode, nelem, connect, elem_stiffness, stiffness)
+
+    call apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_vector, fixed_disp_magn, point_load_magn, &
+                  stiffness, reduced_stiffness, force, reduced_force)
 
    !print *, "connectivity"
    !do i = 1, nelem
@@ -118,22 +124,32 @@ program main
    !print *, "thickness"
    !print *, "t = ", t    
 
-   do k = 1, nelem
-       print *, "K",k
-       do i = 1, 6
-           do j = 1, 6
-               print *,elem_stiffness(k, i, j)*8.0/75000.0
-           end do
-           print *
-       end do
-   end do 
+   !do k = 1, nelem
+   !    print *, "K",k
+   !    do i = 1, 6
+   !        do j = 1, 6
+   !            print *,elem_stiffness(k, i, j)*8.0/75000.0
+   !        end do
+   !        print *
+   !    end do
+   !end do 
 
-    print *, "stiffness matrix"
+   !print *, "stiffness matrix"
+   !do i = 1, 2*nnode
+   !    do j = 1, 2*nnode
+   !        print *, stiffness(i, j)*8.0/75000.0
+   !    end do
+   !    print *
+   !end do
+
+    print *, "=== Reduced system: K * x = f ==="
     do i = 1, 2*nnode
+        print *, "row", i
         do j = 1, 2*nnode
-            print *, stiffness(i, j)*8.0/75000.0
+            write(*, '(F12.4)', advance="no") reduced_stiffness(i, j) *8.0d0/75000.d0
         end do
+        write(*, '(A, F12.4)') "  |  f = ", reduced_force(i)
         print *
     end do
 
-end program main  
+end program main

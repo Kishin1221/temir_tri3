@@ -81,6 +81,9 @@ program main
 
     call assemble_stiffness(nnode, nelem, connect, elem_stiffness, stiffness)
 
+    call apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_vector, fixed_disp_magn, point_load_magn, &
+                  stiffness, reduced_stiffness, force, reduced_force)
+
     call solver(connect, coord, nnode, nelem, D, B, K, Force, disp)
 
     call strain_stress(nelem, connect, D, B, disp, strain, stress)
