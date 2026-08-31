@@ -1,5 +1,5 @@
 subroutine apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_vector, fixed_disp_magn, point_load_magn, &
-                    stiffness, reduced_stiffness, force, reduced_force)
+                    stiffness, shift_index, is_fixed, reduced_stiffness, force, reduced_force)
 
     use parameters
     implicit none
@@ -13,16 +13,15 @@ subroutine apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_
     real(8), intent(in) :: stiffness(2*nnode_max, 2*nnode_max)
 
     ! Declear variables give to main
+    integer, intent(out) :: shift_index(2*nnode_max)
+    logical, intent(out) :: is_fixed(2*nnode_max)
     real(8), intent(out) :: reduced_stiffness(2*nnode_max,2*nnode_max)
     real(8), intent(out) :: force(2*nnode_max), reduced_force(2*nnode_max)
 
     ! Declear local variables in apply_BC
     integer :: i, j, k, trans_dof
-    integer :: shift_index(2*nnode_max)
-    logical :: is_fixed(2*nnode_max)
 
-
-    ! Find fixed degrees of freedom 
+    !!! Find fixed degrees of freedom 
     ! The index of is_fixed is corresponding to degrees of freedom of all nodes.
     is_fixed = .false.                                      ! Initialize : assume that all degrees of freedom is not fixed
     do k = 1, num_bc_set
@@ -70,7 +69,7 @@ subroutine apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_
     reduced_stiffness = 0.0d0                               ! Initialize
     do i = 1, 2*nnode
         do j = 1, 2* nnode
-            if (.not. is_fixed(i) .and. .not. is_fixed(j)) then                           ! If both of row and colmun are not fixed
+            if (.not. is_fixed(i) .and. .not. is_fixed(j)) then                                     ! If both of row and colmun are not fixed
                 reduced_stiffness(i - shift_index(i), j - shift_index(j)) = stiffness(i, j)         ! Reduction. Store the entry of stiffness matrix
             
             else
