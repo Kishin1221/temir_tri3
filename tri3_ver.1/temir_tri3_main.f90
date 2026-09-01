@@ -7,21 +7,21 @@
 
 !!! To Avoid Error (The situations below are not expected in this program.) !!! 
 ! All boundary conditions defined in mentat must be used in job. !
-! 
+
 
 !!! Module set 
 module parameters
     implicit none
 
     ! Specify the limit of model size
-    integer, parameter :: nnode_max = 1000          
-    integer, parameter :: nelem_max = 2000
+    integer, parameter :: nnode_max = 100
+    integer, parameter :: nelem_max = 100
     integer, parameter :: nbc_max = 10
 
 contains
     !!! This is the functions to convert values from marc_style_exponent natation to real(8) notation. 
     function expo2double(field) result(value)       
-        character(len = 256), intent(in) :: field
+        character(len = *), intent(in) :: field
         integer :: expo, pos
         real(8) :: base, value
 
@@ -33,12 +33,14 @@ contains
     end function expo2double
 end module parameters
 
+
 !!! Main of the program 
 program main
     use parameters
     implicit none
 
     ! Variables for read_geometry
+    character(len=256) :: datfilename
     integer :: datfile, nnode, nelem                ! datfile : input file, nnode : the number of nodes, nelem : the number of element
     integer :: connect(nelem_max, 3)                ! connect : connectivity of each element 
     real(8) :: coord(nnode_max, 2)                  ! coord : coordinate of each node
@@ -61,7 +63,7 @@ program main
     real(8) :: stiffness(2*nnode_max, 2*nnode_max)
 
     ! Variables for apply_BC
-    integer :: shift_index(2*nnode_max)
+    integer :: shift_index(2*nnode_max), num_not_fixed
     logical :: is_fixed(2*nnode_max)
     real(8) :: reduced_stiffness(2*nnode_max,2*nnode_max)
     real(8) :: force(2*nnode_max), reduced_force(2*nnode_max)
@@ -78,8 +80,13 @@ program main
     ! Variables for strain_stress
     real(8) :: strain(nelem_max,3), stress(nelem_max,3)
 
+    ! Local variable
+    integer :: i
+
+
     !!! Start Sbroutines    
-    call read_geometry(datfile, nnode, nelem, connect, coord, E, nu, t)
+    call read_geometry(datfilename, datfile, nnode, nelem, connect, coord, E, nu, t)
+
 
     call read_BC(datfile, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_vector, fixed_disp_magn, point_load_magn)
 
@@ -89,20 +96,20 @@ program main
 
     call make_elem_stiffness(nelem, D, B, area, t, elem_stiffness)
 
-    call assemble_stiffness(nnode, nelem, connect, elem_stiffness, stiffness)
+    call assemble_stiffness(nelem, connect, elem_stiffness, stiffness)
 
     call apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_vector, fixed_disp_magn, point_load_magn, &
-                    stiffness, shift_index, is_fixed, reduced_stiffness, force, reduced_force)
+                  stiffness, shift_index, num_not_fixed, is_fixed, reduced_stiffness, force, reduced_force)
 
-    call solver(nnode, reduced_stiffness, reduced_force, reduced_disp)
+    call solver(num_not_fixed, reduced_stiffness, reduced_force, reduced_disp)
 
-    call make_full_displacement(nnode, num_bc_set, bc_node_set, num_node_in_set, shift_index, fixed_disp_vector, &
-                                  is_fixed, fixed_disp_magn, reduced_disp, disp)
+    call make_full_displacement(nnode, num_bc_set, bc_node_set, num_node_in_set, shift_index, is_fixed, &
+                                fixed_disp_magn, reduced_disp, disp)
 
-    call reaction_force(nnode, is_fixed, stiffness, disp, reaction_force)
+    call reaction(nnode, is_fixed, stiffness, disp, reaction_force)
 
     call strain_stress(nelem, connect, D, B, disp, strain, stress)
 
-    call export_result(nnode, nelem, coord, disp, reaction_force, strain, stress)
+    call export_result(datfilename, nnode, nelem, coord, E, nu, t, disp, reaction_force, strain, stress)
 
 end program

@@ -13,15 +13,15 @@ subroutine read_BC(datfile, num_bc_set, bc_node_set, num_node_in_set, fixed_disp
     real(8), intent(out) :: fixed_disp_magn(nbc_max,3), point_load_magn(nbc_max,2)
 
     ! Local variables(common in read_bc)
-    character(len=256) :: line, field
+    character(len=256) :: line
     character(len=20)  :: bc_set_name(nbc_max)
     integer :: bc_set_id
-    integer :: i, j, l, m
+    integer :: i, j, l
 
     ! Local variables used in "define"
     character(len=256) :: bc_set_type
     character(len=20)  :: tokens(100)
-    integer :: ini_node, fin_node, num_to_node, temp_node, token_count, set_node_count
+    integer :: ini_node, fin_node, temp_node, token_count, set_node_count
     logical :: find_to
 
     ! Declear variables used in fixed disp and point load
@@ -88,7 +88,7 @@ subroutine read_BC(datfile, num_bc_set, bc_node_set, num_node_in_set, fixed_disp
                 read(tokens(3),*) fin_node                          ! Store final node number of "to" list
                 num_node_in_set(bc_set_id) = fin_node - ini_node + 1
 
-                do l = 1, num_to_node                                           
+                do l = 1, num_node_in_set(bc_set_id)                                           
                     bc_node_set(bc_set_id, l) = ini_node + l - 1    ! Store node number to apply BC
                 end do
 
@@ -242,4 +242,8 @@ subroutine read_BC(datfile, num_bc_set, bc_node_set, num_node_in_set, fixed_disp
             end do
         end if
     end do Buscar_All_BC                                            ! End of boundary conditions
+
+    ! Close input dat file
+    close(datfile)
+
 end subroutine read_BC

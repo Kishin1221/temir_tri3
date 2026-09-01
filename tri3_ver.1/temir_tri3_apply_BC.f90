@@ -1,5 +1,5 @@
 subroutine apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_vector, fixed_disp_magn, point_load_magn, &
-                    stiffness, shift_index, is_fixed, reduced_stiffness, force, reduced_force)
+                    stiffness, shift_index, num_not_fixed, is_fixed, reduced_stiffness, force, reduced_force)
 
     use parameters
     implicit none
@@ -13,7 +13,7 @@ subroutine apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_
     real(8), intent(in) :: stiffness(2*nnode_max, 2*nnode_max)
 
     ! Output arguments
-    integer, intent(out) :: shift_index(2*nnode_max)
+    integer, intent(out) :: shift_index(2*nnode_max), num_not_fixed
     logical, intent(out) :: is_fixed(2*nnode_max)
     real(8), intent(out) :: reduced_stiffness(2*nnode_max,2*nnode_max)
     real(8), intent(out) :: force(2*nnode_max), reduced_force(2*nnode_max)
@@ -65,6 +65,14 @@ subroutine apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_
         end if
     end do
 
+    ! Count the number of free DOF
+    num_not_fixed = 0
+    do i = 1, 2*nnode
+        if (.not. is_fixed(i)) then
+            num_not_fixed = num_not_fixed + 1
+        end if
+    end do
+
     ! Reduction of stiffness matrix
     reduced_stiffness = 0.0d0                               ! Initialize
     do i = 1, 2*nnode
@@ -82,7 +90,7 @@ subroutine apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_
     ! Apply BC of fixed_disp to global force vector
     force = 0.0d0
     do k = 1, num_bc_set
-        if (point_load_magn(k, 1) /= 0.0d0) then
+        if (point_load_magn(k, 1) /= 0.0d0) then            !!! Caution : point_load_magn is not expected to include round-off error.
             do i = 1, num_node_in_set(k)
                 force(2 * bc_node_set(k, i) - 1) = force(2 * bc_node_set(k, i) - 1) + point_load_magn(k, 1)
             end do
@@ -96,7 +104,7 @@ subroutine apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_
     end do
 
     ! Transposition
-    do k = 1, num_bc_set
+    do k = 1, num_bc_set                                    !!! Caution : fixed_disp_magn is not expected to include round-off error.
         if (fixed_disp_magn(k, 1) /= 0.0d0) then            ! If a displacement given for x-axis is not 0, need transposition.
             do i = 1, num_node_in_set(k)
                 trans_dof = 2 * bc_node_set(k, i) - 1

@@ -1,4 +1,4 @@
-subroutine solver(nnode, reduced_stiffness, reduced_force, reduced_disp)
+subroutine solver(num_not_fixed, reduced_stiffness, reduced_force, reduced_disp)
     
     use parameters
     implicit none
@@ -6,7 +6,7 @@ subroutine solver(nnode, reduced_stiffness, reduced_force, reduced_disp)
     !!!!! Solve simulatenous equation by using Gauss elimination method.
 
     ! Input arguments
-    integer, intent(in) :: nnode
+    integer, intent(in) :: num_not_fixed
     real(8), intent(inout) :: reduced_stiffness(2*nnode_max, 2*nnode_max)
     real(8), intent(inout) :: reduced_force(2*nnode_max)
     
@@ -18,18 +18,18 @@ subroutine solver(nnode, reduced_stiffness, reduced_force, reduced_disp)
     integer :: piv(2*nnode_max), best_row, temp_piv
     real(8) :: best_value, row_factor
 
-    do i = 1, 2*nnode
+    do i = 1, num_not_fixed
         ! The equation No.i of reduced_stiffness is handled as No.piv(i) when calculate.  
         piv(i) = i                                          ! Initialize
     end do
 
     !!! Forward Reduction
-    do k = 1, 2*nnode
+    do k = 1, num_not_fixed
         ! Pivoting
         best_row = k
         best_value = reduced_stiffness(piv(k), k)           ! Initialize
 
-        do i = k + 1, 2*nnode
+        do i = k + 1, num_not_fixed
             if (abs(reduced_stiffness(piv(i), k)) > best_value) then
                 best_row = i                                                    ! Used for pivoting
                 best_value = reduced_stiffness(piv(i), k)                       ! Used for normalization
@@ -45,7 +45,7 @@ subroutine solver(nnode, reduced_stiffness, reduced_force, reduced_disp)
         piv(best_row) = temp_piv                            ! The k'th row 
         
         ! Normalize k-k's entry of reduced_stiffness matrix
-        do j = k, 2*nnode
+        do j = k, num_not_fixed
             reduced_stiffness(piv(k), j) = reduced_stiffness(piv(k), j) / best_value
         end do
 
@@ -53,10 +53,10 @@ subroutine solver(nnode, reduced_stiffness, reduced_force, reduced_disp)
         reduced_force(piv(k)) = reduced_force(piv(k)) / best_value 
 
         ! Subtracting
-        do i = k + 1, 2*nnode
+        do i = k + 1, num_not_fixed
             row_factor = reduced_stiffness(piv(i), k)
 
-            do j = k + 1, 2*nnode
+            do j = k + 1, num_not_fixed
                 reduced_stiffness(piv(i), j) = reduced_stiffness(piv(i), j) -  row_factor * reduced_stiffness(piv(k), j) 
             end do
 
@@ -65,10 +65,10 @@ subroutine solver(nnode, reduced_stiffness, reduced_force, reduced_disp)
     end do 
         
     !!! Back Substitution
-    do k = 2*nnode, 1, -1
+    do k = num_not_fixed, 1, -1
         reduced_disp(piv(k)) = reduced_force(piv(k))
         
-        do j = k + 1, 2*nnode
+        do j = k + 1, num_not_fixed
             reduced_disp(piv(k)) = reduced_disp(piv(k)) - reduced_stiffness(piv(k), j) * reduced_disp(j)
         end do    
     end do

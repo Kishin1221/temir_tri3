@@ -1,29 +1,30 @@
-subroutine read_geometry(datfile, nnode, nelem, connect, coord, E, nu, t)
+subroutine read_geometry(datfilename, datfile, nnode, nelem, connect, coord, E, nu, t)
     use parameters
     implicit none
 
     !!!!! Get .dat file and extract model info and boundary conditions.
 
-    ! Declear variable which will be sent to main
+    ! Output arguments
+    character(len=256), intent(out) :: datfilename
     integer, intent(out) :: datfile
     integer, intent(out) :: nnode, nelem
     integer, intent(out) :: connect(nelem_max, 3)
     real(8), intent(out) :: coord(nnode_max, 2)
     real(8), intent(out) :: E, nu, t
 
-    ! Declear local variable in read_geometry
-    character(len=256) :: datfilename
+    ! Local variables in read_geometry
     character(len=256) :: line, field
     integer :: ios_nelem, ios_nnode, elem_type, ios_elem_type
-    integer :: i, j, l, m, n, pos, expo
+    integer :: i, j, l, m, n
 
-    ! Declear variables to find error
+    ! Local variables to find error
     integer :: ios_sizing, ios_connectivity, ios_coordinate, ios_isotropic, ios_geom
  
     !!! Specify .dat file to input
     call get_command_argument(1,datfilename)                        ! Get the name of input file
     print *, "Input file = ",trim(datfilename)
     open(newunit=datfile, file = trim(datfilename), status="old", action="read")
+
 
     !!! Get geometry info of model
     ! Get model size
@@ -108,6 +109,7 @@ subroutine read_geometry(datfile, nnode, nelem, connect, coord, E, nu, t)
         end if
     end do
 
+
     !!! Get material properties
     !!暫定的なやつ．仕様書がよくわからない．
     do 
@@ -131,6 +133,7 @@ subroutine read_geometry(datfile, nnode, nelem, connect, coord, E, nu, t)
             exit
         end if
     end do
+
 
     !!! Get geometry info
     do

@@ -1,12 +1,12 @@
-subroutine make_full_displacement(nnode, num_bc_set, bc_node_set, num_node_in_set, shift_index, fixed_disp_vector, &
-                                  is_fixed, fixed_disp_magn, reduced_disp, disp)
+subroutine make_full_displacement(nnode, num_bc_set, bc_node_set, num_node_in_set, shift_index, is_fixed, &
+                                  fixed_disp_magn, reduced_disp, disp)
 
     use parameters
     implicit none
 
     ! Input arguments
     integer, intent(in) :: nnode, num_bc_set, bc_node_set(nbc_max,1000), num_node_in_set(nbc_max)
-    integer, intent(in) :: shift_index(2*nnode_max), fixed_disp_vector(nbc_max,3)
+    integer, intent(in) :: shift_index(2*nnode_max)
     logical, intent(in) :: is_fixed(2*nnode_max)    
     real(8), intent(in) :: fixed_disp_magn(nbc_max,3), reduced_disp(2*nnode_max)
 
@@ -14,7 +14,7 @@ subroutine make_full_displacement(nnode, num_bc_set, bc_node_set, num_node_in_se
     real(8), intent(out) :: disp(2*nnode_max)
 
     ! Local variables in make_full_displacement
-    integer :: i, j, k
+    integer :: i, k
 
     !!! Expand reduced_disp to disp
     disp = 0.0d0
@@ -41,7 +41,7 @@ subroutine make_full_displacement(nnode, num_bc_set, bc_node_set, num_node_in_se
 
 end subroutine make_full_displacement
 
-subroutine reaction_force(nnode, is_fixed, stiffness, disp, reaction_force)
+subroutine reaction(nnode, is_fixed, stiffness, disp, reaction_force)
 
     use parameters
     implicit none
@@ -68,7 +68,7 @@ subroutine reaction_force(nnode, is_fixed, stiffness, disp, reaction_force)
         end if
     end do
 
-end subroutine reaction_force
+end subroutine reaction
 
 subroutine strain_stress(nelem, connect, D, B, disp, strain, stress)
 
