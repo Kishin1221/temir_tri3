@@ -6,19 +6,19 @@ subroutine apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_
 
     !!!!! Get BC and global_stiffness matrix, and assemble in equations.
 
-    ! Declear variables get from main
+    ! Input arguments
     integer, intent(in) :: nnode, num_bc_set, bc_node_set(nbc_max,1000), num_node_in_set(nbc_max)
     integer, intent(in) :: fixed_disp_vector(nbc_max,3) 
     real(8), intent(in) :: fixed_disp_magn(nbc_max,3), point_load_magn(nbc_max,2)
     real(8), intent(in) :: stiffness(2*nnode_max, 2*nnode_max)
 
-    ! Declear variables give to main
+    ! Output arguments
     integer, intent(out) :: shift_index(2*nnode_max)
     logical, intent(out) :: is_fixed(2*nnode_max)
     real(8), intent(out) :: reduced_stiffness(2*nnode_max,2*nnode_max)
     real(8), intent(out) :: force(2*nnode_max), reduced_force(2*nnode_max)
 
-    ! Declear local variables in apply_BC
+    ! Local variables in apply_BC
     integer :: i, j, k, trans_dof
 
     !!! Find fixed degrees of freedom 
@@ -40,7 +40,7 @@ subroutine apply_BC(nnode, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_
         end do
     end do
 
-    ! Count the number of DOF fixed by BC fixed_disp so far
+    ! Count the number of DOF fixed by BC of fixed_disp so far
     ! shift_index is defined to original index, not to after reductions. 英語が怪しいな
     shift_index = 0                                         ! Initialize
     do i = 1, 2*nnode

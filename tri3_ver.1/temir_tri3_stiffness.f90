@@ -5,14 +5,14 @@ subroutine make_elem_stiffness(nelem, D, B, area, t, elem_stiffness)
 
     !!!!! Get D and B matrix from main and make element_stifness matrix.
 
-    ! Declear variables get from main
+    ! Input arguments
     integer, intent(in) :: nelem
     real(8), intent(in) :: D(3,3), B(nelem_max,3,6), area(nelem_max), t
     
-    ! Declear variables give to main
+    ! Output arguments
     real(8), intent(out) :: elem_stiffness(nelem_max,6,6)
 
-    ! Declear local variables in make_elem_stiffness
+    ! Local variables in make_elem_stiffness
     integer :: ielem, i, j, k
     real(8) :: DB(nelem_max,3,6)
 
@@ -49,12 +49,12 @@ subroutine assemble_stiffness(nnode, nelem, connect, elem_stiffness, stiffness)
 
     !!!!! Get element_stiffness matrix and assemble in global_stiffness matrix.
     
-    ! Declear variables get from main
+    ! Input arguments
     integer, intent(in) :: nnode, nelem, connect(nelem_max, 3)
     real(8), intent(in) :: elem_stiffness(nelem_max,6,6)
     real(8), intent(out) :: stiffness(2*nnode_max, 2*nnode_max)
 
-    ! Declear local variables
+    ! Local variables in assemble_stiffness
     integer :: ielem, i, j, idof_f, idof_u
 
     ! Assemble elem_stiffness to stiffness

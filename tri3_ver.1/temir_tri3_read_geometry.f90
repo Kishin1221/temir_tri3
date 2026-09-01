@@ -1,4 +1,4 @@
-subroutine read_geometry(datfile, connect, coord, nnode, nelem, E, nu, t)
+subroutine read_geometry(datfile, nnode, nelem, connect, coord, E, nu, t)
     use parameters
     implicit none
 

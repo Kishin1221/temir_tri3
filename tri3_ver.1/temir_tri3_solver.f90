@@ -5,15 +5,15 @@ subroutine solver(nnode, reduced_stiffness, reduced_force, reduced_disp)
 
     !!!!! Solve simulatenous equation by using Gauss elimination method.
 
-    ! Declear variables get from main
+    ! Input arguments
     integer, intent(in) :: nnode
     real(8), intent(inout) :: reduced_stiffness(2*nnode_max, 2*nnode_max)
     real(8), intent(inout) :: reduced_force(2*nnode_max)
     
-    ! Declear variables give to main
+    ! Output arguments
     real(8), intent(out) :: reduced_disp(2*nnode_max)
 
-    ! Declear local variables in solver
+    ! Local variables in solver
     integer :: i, j, k
     integer :: piv(2*nnode_max), best_row, temp_piv
     real(8) :: best_value, row_factor

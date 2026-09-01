@@ -1,18 +1,19 @@
-subroutine make_full_displacement()
+subroutine make_full_displacement(nnode, num_bc_set, bc_node_set, num_node_in_set, shift_index, fixed_disp_vector, &
+                                  is_fixed, fixed_disp_magn, reduced_disp, disp)
 
     use parameters
     implicit none
 
-    ! Declear variables get from main
+    ! Input arguments
     integer, intent(in) :: nnode, num_bc_set, bc_node_set(nbc_max,1000), num_node_in_set(nbc_max)
     integer, intent(in) :: shift_index(2*nnode_max), fixed_disp_vector(nbc_max,3)
     logical, intent(in) :: is_fixed(2*nnode_max)    
     real(8), intent(in) :: fixed_disp_magn(nbc_max,3), reduced_disp(2*nnode_max)
 
-    ! Declear variables give to main
+    ! Output arguments
     real(8), intent(out) :: disp(2*nnode_max)
 
-    ! Declear local variables in make_full_displacement
+    ! Local variables in make_full_displacement
     integer :: i, j, k
 
     !!! Expand reduced_disp to disp
@@ -40,33 +41,75 @@ subroutine make_full_displacement()
 
 end subroutine make_full_displacement
 
-subroutine reaction_force()
+subroutine reaction_force(nnode, is_fixed, stiffness, disp, reaction_force)
 
     use parameters
     implicit none
 
-    ! Declear variables get from main
+    ! Input arguments
     integer, intent(in) :: nnode
-    real(8), intent(in) ::
+    logical, intent(in) :: is_fixed(2*nnode_max)
+    real(8), intent(in) :: stiffness(2*nnode_max, 2*nnode_max), disp(2*nnode_max)
 
-    ! Declear variables give to main
+    ! Output arguments
     real(8), intent(out) :: reaction_force(2*nnode_max)
+
+    ! Local variables in reaction_force
+    integer :: i, j
+
+    !!! Vamos a calcular
+    reaction_force = 0.0d0
+
+    do i = 1, 2*nnode
+        if (is_fixed(i)) then
+            do j = 1, 2*nnode
+                reaction_force(i) = reaction_force(i) + stiffness(i, j) * disp(j)
+            end do
+        end if
+    end do
 
 end subroutine reaction_force
 
-subroutine strain_stress()
+subroutine strain_stress(nelem, connect, D, B, disp, strain, stress)
 
     use parameters
     implicit none
 
-    ! Declear varianles get from main
-    integer, intent(in) :: nelem
+    ! Input arguments
+    integer, intent(in) :: nelem, connect(nelem_max, 3)
     real(8), intent(in) :: D(3,3), B(nelem_max,3,6)
     real(8), intent(in) :: disp(2*nnode_max)
 
-    ! Declear variables give to main
-    real(8), intent(out) :: strain(nelem_max, 2), stress(nelem_max, 2)
+    ! Output arguments
+    real(8), intent(out) :: strain(nelem_max, 3), stress(nelem_max, 3)
 
+    ! Local variables in strain_stress
+    integer :: ielem, i, j, k
+    real(8) :: local_disp(6)
+
+    !!! Vamos a calcular
+    do ielem = 1, nelem
+        local_disp = 0.0d0
+        strain(ielem, :) = 0.0d0
+        stress(ielem, :) = 0.0d0
+
+        do i =1, 3
+            local_disp(2*i - 1) = disp(2*connect(ielem, i) -1)                  ! x-axis
+            local_disp(2*i) = disp(2*connect(ielem, i))                         ! y-axis
+        end do
+
+        do j = 1, 3
+            do k = 1, 6
+                strain(ielem, j) = strain(ielem, j) + B(ielem, j, k) * local_disp(k)
+            end do
+        end do
+
+        do j = 1, 3
+            do k = 1, 3
+                stress(ielem, j) = stress(ielem, j) + D(j, k) * strain(ielem, k)
+            end do
+        end do
+    end do
 
 end subroutine strain_stress
 

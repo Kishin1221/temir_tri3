@@ -3,21 +3,22 @@ subroutine read_BC(datfile, num_bc_set, bc_node_set, num_node_in_set, fixed_disp
     implicit none
 
     !!!!! Read the same file as subroutine read_geometry, and make vector of External Force and Given Displacement.
-    ! Declear variable passed by read_geometry
+
+    ! Input arguments
     integer, intent(in) :: datfile
 
-    ! Declear variables return to main
+    ! Output arguments
     integer, intent(out) :: num_bc_set, bc_node_set(nbc_max,1000)
     integer, intent(out) :: fixed_disp_vector(nbc_max,3), num_node_in_set(nbc_max)
     real(8), intent(out) :: fixed_disp_magn(nbc_max,3), point_load_magn(nbc_max,2)
 
-    ! Declear common variable in read_bc
+    ! Local variables(common in read_bc)
     character(len=256) :: line, field
     character(len=20)  :: bc_set_name(nbc_max)
     integer :: bc_set_id
     integer :: i, j, l, m
 
-    ! Declear variables used in "define"
+    ! Local variables used in "define"
     character(len=256) :: bc_set_type
     character(len=20)  :: tokens(100)
     integer :: ini_node, fin_node, num_to_node, temp_node, token_count, set_node_count

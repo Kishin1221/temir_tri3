@@ -38,44 +38,54 @@ program main
     use parameters
     implicit none
 
-    !Declear variables for read_geometry
+    ! Variables for read_geometry
     integer :: datfile, nnode, nelem                ! datfile : input file, nnode : the number of nodes, nelem : the number of element
     integer :: connect(nelem_max, 3)                ! connect : connectivity of each element 
     real(8) :: coord(nnode_max, 2)                  ! coord : coordinate of each node
     real(8) :: E, nu, t                             ! E : Young modulous, nu = poisson ration, t = thickness of plane stress plate
 
-    ! Declear variables for read_BC
+    ! Variables for read_BC
     integer :: num_bc_set, bc_node_set(nbc_max,1000), fixed_disp_vector(nbc_max,3), num_node_in_set(nbc_max)
     real(8) :: fixed_disp_magn(nbc_max,3), point_load_magn(nbc_max,2)
 
-    !Declear variable for make_D
+    ! Variables for make_D
     real(8) :: D(3,3)                               ! D : D-matrix 
 
-    !Declear variables for make_B
+    ! Variables for make_B
     real(8) :: B(nelem_max,3,6), area(nelem_max)    ! B : B-matrix
 
-    ! Declear variables for make_elem_stiffness
-    real(8) :: elem_stiffness(nelem,6,6)
+    ! Variables for make_elem_stiffness
+    real(8) :: elem_stiffness(nelem_max,6,6)
 
-    !Declear variabls for assembly_K
-    real(8) :: elem_stiffness(nelem_max,6,6), stiffness(2*nnode_max, 2*nnode_max)
+    ! Variables for assemble_stiffness
+    real(8) :: stiffness(2*nnode_max, 2*nnode_max)
 
-    !Dcelear variables for solver
-    real(8) :: Force(2*nnode_max)
+    ! Variables for apply_BC
+    integer :: shift_index(2*nnode_max)
+    logical :: is_fixed(2*nnode_max)
+    real(8) :: reduced_stiffness(2*nnode_max,2*nnode_max)
+    real(8) :: force(2*nnode_max), reduced_force(2*nnode_max)
+
+    ! Variables for solver
+    real(8) :: reduced_disp(2*nnode_max)
+
+    ! Variables for make_full_displacement
     real(8) :: disp(2*nnode_max)
 
-    !Declear variables for strain_stress
-    real(8) :: strain(nelem_max,3)
-    real(8) :: stress(nelem_max,3)
+    ! Variables for reaction_force
+    real(8) :: reaction_force(2*nnode_max)
+
+    ! Variables for strain_stress
+    real(8) :: strain(nelem_max,3), stress(nelem_max,3)
 
     !!! Start Sbroutines    
-    call read_geometry(datfile, connect, coord, nnode, nelem, E, nu)
+    call read_geometry(datfile, nnode, nelem, connect, coord, E, nu, t)
 
-    call read_BC(datfile, num_bc_set, bc_node_set, fixed_disp_vector, fixed_disp_magn, point_load_magn)
+    call read_BC(datfile, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_vector, fixed_disp_magn, point_load_magn)
 
     call make_D(D, E, nu)
 
-    call make_B(connect, coord, nelem, area, B)
+    call make_B(nelem, connect, coord, B, area)
 
     call make_elem_stiffness(nelem, D, B, area, t, elem_stiffness)
 
@@ -86,8 +96,13 @@ program main
 
     call solver(nnode, reduced_stiffness, reduced_force, reduced_disp)
 
+    call make_full_displacement(nnode, num_bc_set, bc_node_set, num_node_in_set, shift_index, fixed_disp_vector, &
+                                  is_fixed, fixed_disp_magn, reduced_disp, disp)
+
+    call reaction_force(nnode, is_fixed, stiffness, disp, reaction_force)
+
     call strain_stress(nelem, connect, D, B, disp, strain, stress)
 
-    call write(connect, coord, strain, stress)
+    call export_result(nnode, nelem, coord, disp, reaction_force, strain, stress)
 
 end program
