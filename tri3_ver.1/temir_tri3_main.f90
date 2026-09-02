@@ -8,15 +8,18 @@
 !!! To Avoid Error (The situations below are not expected in this program.) !!! 
 ! All boundary conditions defined in mentat must be used in job. !
 
+!!! For compile
+! gfortran temir_tri3_main.f90 temir_tri3_read_geometry.f90 temir_tri3_read_BC.f90 temir_tri3_DBmatrices.f90 temir_tri3_stiffness.f90 temir_tri3_apply_BC.f90 temir_tri3_solver.f90 temir_tri3_post_process.f90 temir_tri3_export_result.f90 -o temir_tri3.exe 
+
 
 !!! Module set 
 module parameters
     implicit none
 
     ! Specify the limit of model size
-    integer, parameter :: nnode_max = 100
-    integer, parameter :: nelem_max = 100
-    integer, parameter :: nbc_max = 10
+    integer, parameter :: nnode_max = 256
+    integer, parameter :: nelem_max = 256
+    integer, parameter :: nbc_max = 32
 
 contains
     !!! This is the functions to convert values from marc_style_exponent natation to real(8) notation. 
@@ -25,6 +28,8 @@ contains
         integer :: expo, pos
         real(8) :: base, value
 
+        print *, "field = [", field, "]"   
+        
         pos = scan(field, "+-", BACK=.true.)        ! Buscar sign
         read(field(:pos-1),*) base                  ! Extract base of value
         read(field(pos:),*) expo                    ! Extract exponent of value
@@ -86,7 +91,6 @@ program main
 
     !!! Start Sbroutines    
     call read_geometry(datfilename, datfile, nnode, nelem, connect, coord, E, nu, t)
-
 
     call read_BC(datfile, num_bc_set, bc_node_set, num_node_in_set, fixed_disp_vector, fixed_disp_magn, point_load_magn)
 
