@@ -1,7 +1,8 @@
 !!!!!!! "temir" is a FEM program for elastic homogeneous material. !!!!!!!
 
 !!!!! Program Specifications !!!!! 
-! This version "temir_tri3" only accept marc element type 201. !!!!!
+! This version "temir_tri3" only accept marc element type 201.
+! Numbers of elements and nodes must be continuous.
 ! Max size of model is specified in module. !!!!!
 ! Running command should be "~/path/temir_tri3_main.exe modeldatfil.dat". !
 
@@ -27,8 +28,6 @@ contains
         character(len = *), intent(in) :: field
         integer :: expo, pos
         real(8) :: base, value
-
-        print *, "field = [", field, "]"   
         
         pos = scan(field, "+-", BACK=.true.)        ! Buscar sign
         read(field(:pos-1),*) base                  ! Extract base of value
